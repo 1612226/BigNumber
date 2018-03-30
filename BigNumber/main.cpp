@@ -1,17 +1,27 @@
 #include <iostream>
 #include <fstream>
 #include <cstring>
+#include <sstream>
 #include "QInt.h"
 #include "QFloat.h"
 #include "IntFunction.h"
 using namespace std;
 
 int main(int argc,char* argv[]) {
-	/*fstream fi, fo;
+
+	fstream fi, fo;
 	fi.open(argv[1], ios::in);
 	fo.open(argv[2], ios::out);
-	if (!fi.is_open()) cout << "Unable to open\n";
-	else {
+
+	int choice;
+	do {
+		cout << "Enter 1: QInt";
+		cout << "\nEnter 2: QFloat\n";
+		cin >> choice;
+	} while (choice != 1 && choice != 2);
+
+	if (choice == 1)
+	{
 		while (!fi.eof()) {
 			string tmp = "";
 			getline(fi, tmp);
@@ -19,38 +29,57 @@ int main(int argc,char* argv[]) {
 			fo << res << endl;
 		}
 	}
-	fi.close();
-	fo.close();*/
+	else {
+		while (!fi.eof())
+		{
+			string tmp = "";
+			getline(fi, tmp);
+			stringstream ss(tmp);
+			vector <string> line;
+			//
+			QFloat f1,f2,f3;
+			int base;
 
-	/*int base;
-	cin >> base;
+			while (ss >> tmp)
+			{
+				line.push_back(tmp);
+			}
 
-	string input;
-	cin >> input;
-	QFloat f;
-	f.ScanQFloat(input, base);
-	f.PrintQFloat(base);*/
+			if (line.size() == 3)
+			{
+				stringstream sstr1(line[0]);
+				sstr1 >> base;
 
-	//string input1, input2;
-	//cin >> input1;
-	//cin >> input2;
-	//QFloat f1,f2;
+				f1.ScanQFloat(line[2], base);
 
-	//f1.ScanQFloat(input1, 10);
-	//f2.ScanQFloat(input2, 10);
+				stringstream sstr2(line[1]);
+				sstr2 >> base;
 
-	//f1.PrintQFloat(10);
-	//f2.PrintQFloat(10);
-	//cout << "\n-------------------\n";
-	//QFloat f3 = f1*f2;
-	//f3.PrintQFloat(10);
-	//cout << endl;
-	//QFloat f4 = f1 / f2;
-	//f4.PrintQFloat(10);
+				fo << f1.PrintQFloat(base) << endl;
+			}
+			else if (line.size() == 4){
+				stringstream sstr1(line[0]);
+				sstr1 >> base;
+			
+				f1.ScanQFloat(line[1], base);
+				f2.ScanQFloat(line[3], base);
 
-	//QFloat f1;
-	//f1.ScanQFloat("00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001", 2);
-	//f1.PrintQFloat(10);
+				char opr = line[2][0];
+				if (opr == '+')
+					f3 = f1 + f2;
+				else if (opr == '-')
+					f3 = f1 - f2;
+				else if (opr == '*')
+					f3 = f1 * f2;
+				else if (opr == '/')
+					f3 = f1 / f2;
+				else
+					fo << "invalid operator";
+
+				fo << f3.PrintQFloat(base) << endl;
+			}
+		}
+	}
 
 	return 0;
 }

@@ -58,12 +58,15 @@ void F_chen0(string &a, int n);
 //cộng 2 số thập phân ở dạng chuỗi
 string F_strPlusStr(string a, string b);
 
+// chuyển từ bit sang số thập phân ở phần trước dấu chấm
 string BitToNumBeforeDot(string bit);
 
+// chuyển từ bit sang số thập phân ở phần sau dấu chấm
 string BitToNumAfterDot(string bit);
 
 //2 mu trừ n
 string fstrDiv2v2(string str);
 string _2Exp_n(int n);
+
 // cộng chuỗi số sau dấu chấm
 string addFrac(string a, string b);

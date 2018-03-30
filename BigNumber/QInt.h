@@ -29,17 +29,19 @@ public:
 	friend QInt operator - (QInt b); // 1 ngoi
 	QInt operator ^ (const QInt& b);
 
-	//toán tử +,-,*,/ 2 số QInt
+	//toán tử +,-,*,/,== 2 số QInt
 	QInt operator + (QInt& b);
 	QInt operator - (const QInt& b);
 	QInt operator * (/*const*/ QInt& M);
 	QInt operator / (/*const*/ QInt& M);
+	bool operator==(QInt &);
 
 
 	//dich trai 1 bit
 	QInt leftShift();
 	//dich phai 1 bit
 	QInt rightShift();
+
 	QInt operator >> (unsigned int x);
 	QInt operator << (unsigned int x);
 
@@ -51,6 +53,7 @@ public:
 	QInt abs(QInt a);
 	string nhan(QInt& M);
 
+	// trả về đầy đủ 128 bit của Int
 	string binArrFull();
 
 	//thêm phương thức chia trả về chuỗi quotient lượt bỏ 0 đầu

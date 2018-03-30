@@ -91,7 +91,7 @@ void QFloat::ScanQFloat(string input, int base) {
 
 			return;
 		}
-
+	
 		pair <string, string> pss = split_float_num(input);
 		string part1 = pss.first;
 		string part2 = pss.second;
@@ -126,7 +126,6 @@ void QFloat::ScanQFloat(string input, int base) {
 				break;
 			}
 		}
-		cout << endl;
 		
 
 		int tmp = fraction.size();
@@ -156,7 +155,7 @@ void QFloat::ScanQFloat(string input, int base) {
 	}
 }
 
-void QFloat::printNormalize(string bit) {
+string QFloat::printNormalize(string bit) {
 	string exp_bit;
 	for (int i = 1; i <= 15; i++) {
 		exp_bit.push_back(bit[i]);
@@ -183,19 +182,19 @@ void QFloat::printNormalize(string bit) {
 			part2.push_back(bit[i]);
 	}
 
-
+	string result = "";
 	if (getBit(0) == 1)
-		cout << "-";
-	cout << BitToNumBeforeDot(part1);
-	cout << "." << BitToNumAfterDot(part2);
-	cout << endl;
-
+		result +=  "-";
+	result += (BitToNumBeforeDot(part1)+ "." + BitToNumAfterDot(part2));
+	
+	return result;
 }
 
-void QFloat::printDeNormalize(string bit)
+string QFloat::printDeNormalize(string bit)
 {
-	if (bit[0] == 1)
-		cout << "-";
+	bool flagMinus = false;
+	if (bit[0] == '1')
+		flagMinus = true;
 
 	bit = bit.substr(16);
 	
@@ -203,44 +202,53 @@ void QFloat::printDeNormalize(string bit)
 
 	for (int i = 111; i >= 0; i--) {
 		if (bit[111 - i] == '1') {
-			int exp = 16494 + i;
+			int exp = 16494 - i;
 			res = addFrac(res, _2Exp_n(exp));
 		}
 	}
+	
+	res = "0." + res;
 
-	cout << res << endl;
+	if (flagMinus)
+		res = "-" + res;
+	
+	return res;
 }
 
-void QFloat::PrintQFloat(int base) {
-	
+string QFloat::PrintQFloat(int base) {
+
 	string bit;
 	for (int i = 0; i < 128; i++) {
 		bit.push_back(getBit(i)+'0');
 	}
+
 	if (base == 2) {
-		cout << bit << endl;
-		return;
+		return bit;
 	}
 
 	int type = Classification(bit);
+	
+	string res = "";
 
 	switch (type) {
 	case 0:
-		cout << "0";
+		res = "0";
 		break;
 	case 1:
-		printNormalize(bit);
+		res = printNormalize(bit);
 		break;
 	case 2:
-		printDeNormalize(bit);
+		res = printDeNormalize(bit);
 		break;
 	case 3:
-		cout << "Inf\n";
+		res = "Inf";
 		break;
 	case 4:
-		cout << "NaN\n";
+		res = "NaN";
 		break;
 	}
+
+	return res;
 }
 
 bool QFloat::checkZero() {
@@ -250,24 +258,16 @@ bool QFloat::checkZero() {
 	return true;
 }
 
-bool QFloat::checkExpEqual( QFloat&y) {
+bool QFloat::checkExpEqual(QFloat&y) {
 	for (int i = 1; i < 16; i++)
 		if (getBit(i) != y.getBit(i))
 			return false;
 	return true;
 }
-bool QFloat::checkExpOverflow() {
-	for (int i = 1; i < 16; i++) {
-		if (getBit(i) == 0)
+bool QFloat::checkEqual(QFloat &y) {
+	for (int i = 0; i < 128; i++)
+		if (getBit(i) != y.getBit(i))
 			return false;
-	}
-	return true;
-}
-bool QFloat::checkExpUnderflow() {
-	for (int i = 1; i < 16; i++) {
-		if (getBit(i) == 1)
-			return false;
-	}
 	return true;
 }
 void QFloat::shiftLeftLogical(int start, int end, int bit) {
@@ -305,14 +305,28 @@ void QFloat::DecrementOne(int start, int end) {
 	int rem = 1;
 	for (int i = end; i >= start; i--) {
 		int temp = getBit(i) - rem;
-		setBit(i, temp == 0 ? 0 : 1);
-		temp == 0 ? rem = 0 : rem = 1;
+		setBit(i, abs(temp) % 2);
+		if (temp == 1 || temp == 0) {
+			rem = 0;
+		}
+		else if (temp == -1 || temp == -2) {
+			rem = 1;
+		}
 	}
 }
-
-QFloat QFloat::operator+(const QFloat &num2) {
+bool QFloat::checkBiggerExp(QFloat &x, QFloat &y) {
+	string bitX, bitY;
+	for (int i = 1; i < 16; i++) {
+		bitX += to_string(x.getBit(i));
+		bitY += to_string(y.getBit(i));
+	}
+	if (cvBiasToNum(bitX) < cvBiasToNum(bitY)) {
+		return 1;
+	}
+	return 0;
+}
+QFloat QFloat::add(const QFloat &num2) {
 	QFloat res, x = *this, y = num2;
-	string remBit = "";
 	//Kiem tra x hoac y co bang 0 hay khong
 	if (x.checkZero()) {
 		res = y;
@@ -325,95 +339,208 @@ QFloat QFloat::operator+(const QFloat &num2) {
 		}
 		else {
 			//Lap den khi ca 2 phan mu deu bang nhau
-			bool flag = 0;
-			for (int i = 1; i < 16; i++) {
-				if (x.getBit(i) < y.getBit(i)) {
-					flag = 1;
-					break;
-				}
+			bool flag = checkBiggerExp(x, y), equal = 1;
+			if (!x.checkExpEqual(y)) {
+				flag == 1 ? x.IncrementOne(1, 15) : y.IncrementOne(1, 15);
+				flag == 1 ? x.shiftRightLogical(16, 127, 1) : y.shiftRightLogical(16, 127, 1);
+				flag == 1 ? x.setBit(16, 1) : y.setBit(16, 1);
+				equal = 0;
 			}
-
 			while (!x.checkExpEqual(y)) {
 				//Tang ben mu nho hoc
 				flag == 1 ? x.IncrementOne(1, 15) : y.IncrementOne(1, 15);
 				flag == 1 ? x.shiftRightLogical(16, 127, 1) : y.shiftRightLogical(16, 127, 1);
 				//Kiem tra tri co bang 0 hay khong
-				if (x.isSignificandZero()) {
-					res = y;
-					return res;
-				}
-				if (y.isSignificandZero()) {
-					res = x;
-					return res;
-				}
 			}
-
 			//Lay gia tri phan mu bang nhau gan cho res
 			for (int i = 1; i < 16; i++) {
 				res.setBit(i, x.getBit(i));
 			}
-			
-			//Cong phan dau
-			res.setBit(0, (x.getBit(0) + y.getBit(0)) % 2);
+			//Lay dau cua so lon hon
+			res.setBit(0, 0);
 			//Cong phan tri cua 2 so vao nhau
 			int rem = 0;
-			for (int j = 127; j >= 16; j--) {
-				int temp = x.getBit(j) + y.getBit(j) + rem;
-				res.setBit(j, temp % 2);
+			for (int i = 127; i >= 16; i--) {
+				int temp = x.getBit(i) + y.getBit(i) + rem;
+				res.setBit(i, temp % 2);
 				rem = temp / 2;
 			}
-			res.PrintQFloat(10);
-			cout << endl;
-			//Kiem tra neu 2 so trai dau va tong phan tri bang 0 thi se ra 0
-			if (x.getBit(0) != y.getBit(0) && res.isSignificandZero()) {
-				res.m_data[0] = res.m_data[1] = res.m_data[2] = res.m_data[3] = 0;
-				return res;
+			//Cac truong hop xay ra khi cong
+			if (rem == 1 && equal == 0) {
+				res.shiftRightLogical(16, 127, 1);
+				res.IncrementOne(1, 15);
 			}
-			//Nguoc lai, xay ra tran so phan tri -> dich phai 1 bit, roi tang phan mu len 1
-			else {
-				if (rem == 1) {
-					remBit += to_string(res.getBit(127));
-					res.shiftRightLogical(16, 127, 1);
-					res.IncrementOne(1, 15);
-					//Kiem tra xem co tran mu hay khong?
-					if (res.checkExpOverflow()) {
-						cout << "Tran so tren!" << endl;
-						return res;
+			else if (rem == 1 && equal == 1) {
+				res.shiftRightLogical(16, 127, 1);
+				res.IncrementOne(1, 15);
+				res.setBit(16, 1);
+			}
+			else if (equal == 1 && rem == 0) {
+				res.shiftRightLogical(16, 127, 1);
+				res.IncrementOne(1, 15);
+			}
+			res.PrintQFloat(10);
+			return res;
+		}
+	}
+}
+QFloat QFloat::substract(const QFloat &num2) {
+	QFloat res, x = *this, y = num2;
+	string remBit = "";
+	//Kiem tra x hoac y co bang 0 hay khong
+	if (x.checkZero()) {
+		res = y;
+		res.setBit(0, 1);
+		return res;
+	}
+	else {
+		if (y.checkZero()) {
+			res = x;
+			return res;
+		}
+		else if (x.checkEqual(y)) {
+			return res;
+		}
+		else {
+			bool flag = checkBiggerExp(x, y);
+			if (x.checkExpEqual(y)) {
+				bool biggerSignificand;
+				int j = 16;
+				while ((x.getBit(j) == 0 && y.getBit(j) == 0) || (x.getBit(j) == 1 && y.getBit(j) == 1)) {
+					j++;
+				}
+				if (x.getBit(j) == 1)
+					biggerSignificand = true;
+				else
+					biggerSignificand = false;
+				int rem = 0, temp = 0;
+				//Thuc hien phep tru
+				for (int i = 127; i >= 16; i--) {
+					if (biggerSignificand) {
+						temp = x.getBit(i) - y.getBit(i) - rem;
 					}
+					else {
+						temp = y.getBit(i) - x.getBit(i) - rem;
+					}
+					if (temp == 1 || temp == 0) {
+						rem = 0;
+					}
+					else if (temp == -1 || temp == -2) {
+						rem = 1;
+					}
+					res.setBit(i, abs(temp) % 2);
+				}
+				if (biggerSignificand) {
+					res.setBit(0, 0);
 				}
 				else {
-					//Dua ve dang chuan (tuc la bit dau cua phan tri khac 0)
-					while (res.getBit(16) != 0) {
+					res.setBit(0, 1);
+				}
+				//Gan phan mu
+				for (int i = 1; i < 16; i++) {
+					res.setBit(i, x.getBit(i));
+				}
+				//Xet cac truong hop khi tru
+				if (rem == 0) {
+					while (res.getBit(16) == 0) {
 						res.shiftLeftLogical(16, 127, 1);
-						res.setBit(127, remBit[0]);
-						remBit = remBit.substr(1, remBit.length() - 1);
 						res.DecrementOne(1, 15);
 					}
-					if (res.checkExpUnderflow() && rem == 1) {
-						cout << "Tran so duoi!" << endl;
-						return res;
-					}
-					/*Lam tron ket qua (remBit co dang 01111 -> khong can lam tron,
-					remBit co dang 10010->lam tron)*/
-					/*if (remBit[0] == 1) {
-						for (int i = 1; i < remBit.length(); i++) {
-							if (remBit[i] == 1)
-								res.IncrementOne(16, 127);
-						}
-					}*/
-					return res;
+					res.shiftLeftLogical(16, 127, 1);
+					res.DecrementOne(1, 15);
 				}
+				else {
+
+				}
+				return res;
+			}
+			else {
+				//Lap den khi ca 2 phan mu deu bang nhau
+				if (!x.checkExpEqual(y)) {
+					flag == 1 ? x.IncrementOne(1, 15) : y.IncrementOne(1, 15);
+					flag == 1 ? x.shiftRightLogical(16, 127, 1) : y.shiftRightLogical(16, 127, 1);
+					flag == 1 ? x.setBit(16, 1) : y.setBit(16, 1);
+				}
+				while (!x.checkExpEqual(y)) {
+					//Tang ben mu nho hoc
+					flag == 1 ? x.IncrementOne(1, 15) : y.IncrementOne(1, 15);
+					flag == 1 ? x.shiftRightLogical(16, 127, 1) : y.shiftRightLogical(16, 127, 1);
+					//Kiem tra tri co bang 0 hay khong
+				}
+				//Lay gia tri phan mu bang nhau gan cho res
+				for (int i = 1; i < 16; i++) {
+					res.setBit(i, x.getBit(i));
+				}
+				//Lay dau cua so lon hon
+				res.setBit(0, flag == 1 ? 1 : 0);
+				//Tru phan tri cua 2 so vao nhau
+				int rem = 0, temp;
+				for (int i = 127; i >= 16; i--) {
+					if (flag == 1) {
+						temp = y.getBit(i) - x.getBit(i) - rem;
+					}
+					else {
+						temp = x.getBit(i) - y.getBit(i) - rem;
+					}
+					res.setBit(i, abs(temp) % 2);
+					if (temp == 1 || temp == 0) {
+						rem = 0;
+					}
+					if (temp == -1 || temp == -2) {
+						rem = 1;
+					}
+				}
+			
+				//Cac truong hop xay ra khi tru
+				if (rem == 0) {
+
+				}
+				else {
+					while (res.getBit(16) == 0) {
+						res.DecrementOne(1, 15);
+						res.shiftLeftLogical(16, 127, 1);
+					}
+					res.shiftLeftLogical(16, 127, 1);
+					res.DecrementOne(1, 15);
+				}
+				return res;
 			}
 		}
 	}
 }
-QFloat QFloat::operator-(const QFloat &num2) {
+QFloat QFloat::operator+(const QFloat &num2) {
 	QFloat res, x = *this, y = num2;
-	y.getBit(0) == 0 ? y.setBit(0, 1) : y.setBit(0, 0);
-	res = x + y;
+	if (x.getBit(0) == 0 && y.getBit(0) == 0)
+		res = x.add(y);
+	else if (x.getBit(0) == 1 && y.getBit(0) == 1) {
+		res = x.add(y);
+		res.setBit(0, 1);
+	}
+	else if (x.getBit(0) == 1 && y.getBit(0) == 0) {
+		res = y.substract(x);
+	}
+	else {
+		res = x.substract(y);
+	}
 	return res;
 }
-
+QFloat QFloat::operator-(const QFloat &num2) {
+	QFloat res, x = *this, y = num2;
+	if (x.getBit(0) == 0 && y.getBit(0) == 0) {
+		res = x.substract(y);
+	}
+	else if (x.getBit(0) == 1 && y.getBit(0) == 1) {
+		res = y.substract(x);
+	}
+	else if (x.getBit(0) == 1 && y.getBit(0) == 0) {
+		res = x.add(y);
+		res.setBit(0, 1);
+	}
+	else {
+		res = x.add(y);
+	}
+	return res;
+}
 bool QFloat::is0(){
 	for (int i = 0; i < 128; i++){
 		if (this->getBit(i) == 1) return false;

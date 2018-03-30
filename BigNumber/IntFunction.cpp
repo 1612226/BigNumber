@@ -98,6 +98,7 @@ string strPlusStr(string a, string b){
 }
 //Chuyển từ chuỗi nhị phân sang số thập phân
 string BinToDec(string Bin){
+
 	int minus = 0;
 	if (Bin.length() == 128 && Bin[0] == '1') minus = 1;
 	if (minus){
@@ -119,6 +120,7 @@ string BinToDec(string Bin){
 		i--;
 		j--;
 	}
+	if (res == "") res = "0";
 	if (minus) res.insert(res.begin(), '-');
 	return res;
 }
@@ -213,7 +215,16 @@ string readLine(string line){
 				   if (phan[2] == "+") res = a + b;
 				   else if (phan[2] == "-") res = a - b;
 				   else if (phan[2] == "*") res = a*b;
-				   else if (phan[2] == "/") res = a / b;
+				   else if (phan[2] == "/") {
+					   QInt zero(0, 0, 0, 0);
+					   if (b == zero)
+					   {
+						   if (a.getBit(0) == 1) 
+							   return "-Inf";
+						   return "Inf";
+					   }
+					   res = a / b;
+				   }
 				   else if (phan[2] == "&") res = a&b;
 				   else if (phan[2] == "|") res = a | b;
 				   else if (phan[2] == "^") res = a^b;

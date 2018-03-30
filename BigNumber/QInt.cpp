@@ -323,10 +323,18 @@ string QInt::chia(QInt& M){
 	}
 	return Q.binArr();
 }
-string QInt::getFromTo(int x, int y){
+string QInt::getFromTo(int x, int y) {
 	string res = "";
-	for (int i = x; i <= y; i++){
+	for (int i = x; i <= y; i++) {
 		res += getBit(i) + '0';
 	}
 	return res;
+}
+
+bool QInt::operator==(QInt &q){
+	for (int i = 0; i < 4; i++) {
+		if (m_data[i] != q.m_data[i])
+			return false;
+	}
+	return true;
 }
