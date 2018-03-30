@@ -1,10 +1,15 @@
 ﻿#pragma once
-#include"QBit.h"
-#include "IntFunction.h"
+#include <iostream>
+#include <vector>
+#include <string>
+using namespace std;
 
-class QInt:public QBit{
-
+class QInt{
+private:
+	int m_data[4];
 public:
+	int getBit(int pos);
+	void setBit(int pos, int bit);
 	QInt();
 	QInt(const QInt& num);
 	QInt(int, int, int, int);
@@ -43,6 +48,12 @@ public:
 	string print(int base);
 
 	//lấy trị tuyệt đối QInt
-	QInt ABS(QInt a);
+	QInt abs(QInt a);
+	string nhan(QInt& M);
 
+	string binArrFull();
+
+	//thêm phương thức chia trả về chuỗi quotient lượt bỏ 0 đầu
+	string chia(QInt& M);
+	string getFromTo(int x, int y);
 };

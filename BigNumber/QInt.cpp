@@ -1,5 +1,28 @@
 ﻿#include "QInt.h"
+#include "IntFunction.h"
+#include <cstring>
 
+//Lấy 1 bit ở vị trí pos của QInt
+int QInt::getBit(int pos){ //pos tinh tu l->r : 0->127
+	int data_i = pos / 32;
+	pos %= 32;
+	int bit = (this->m_data[data_i] >> (31 - pos)) & 1;
+	return bit;
+}
+
+//Set bit vào vị trí pos của QInt
+void QInt::setBit(int pos, int bit){
+	int bitpos = this->getBit(pos);
+	int data_i = pos / 32;
+	pos = pos % 32;
+	if (bitpos == 1 && bit == 0){
+		this->m_data[data_i] = this->m_data[data_i] - (1 << (31 - pos));
+	}
+	else{
+		this->m_data[data_i] = this->m_data[data_i] | (bit << (31 - pos));
+	}
+	//or ma bit=1 thi no sẽ set đúng, còn bit=0 thì ko đổi.
+}
 
 //default constructor QInt=0
 QInt::QInt(){
@@ -168,17 +191,17 @@ QInt QInt::  operator * (/*const*/ QInt& M){
 }
 
 //thuật toán chia 2 số nguyên
-QInt QInt::operator /(/*const*/ QInt& M) {
+QInt QInt::operator /(/*const*/ QInt& M){
 	QInt A;
 	QInt Q = (*this);
 	int dauQ = Q.getBit(0);
 	int dauM = M.getBit(0);
 	//cout << dauQ << " " << dauM << endl;
-	M = ABS(M);
-	Q = ABS(Q);
+	M = abs(M);
+	Q = abs(Q);
 	int firstQ;
 	int i = 128;
-	while (i--) {
+	while (i--){
 		firstQ = Q.getBit(0);
 		A.leftShift();
 		Q.leftShift();
@@ -191,7 +214,6 @@ QInt QInt::operator /(/*const*/ QInt& M) {
 		else Q.setBit(127, 1);
 	}
 	if (dauM != dauQ) return -Q;
-	
 	return Q;
 }
 //nhap vao voi string la chuoi bat ki kèm theo cơ số
@@ -231,10 +253,80 @@ string QInt::print(int base){
 	return res;
 }
 //trị tuyệt đối QInt
-QInt QInt::ABS(QInt a){
+QInt QInt::abs(QInt a){
 	if (a.getBit(0) == 0) return a;
 	QInt one(0, 0, 0, 1);
 	a = a - one;
 	QInt res = ~a;
+	return res;
+}
+
+string QInt::nhan(QInt& M){ //viêt thêm hàm nhân trong QInt để lấy 256bit answer
+	QInt A;
+	int Q_1 = 0;
+	QInt Q = (*this);
+	int lastA, lastQ;
+	int i = 128;
+	//freopen("output.txt", "w", stdout);
+	while (i--){
+		lastQ = Q.getBit(127);
+		if (lastQ > Q_1){
+			A = A - M;
+		}
+		else if (lastQ < Q_1) {
+			A = A + M;
+		}
+		//dich phai
+		lastA = A.getBit(127);
+		Q_1 = lastQ;
+		Q.rightShift();
+		Q.setBit(0, lastA);
+
+		A.rightShift();
+		//cout << A.binArr() << endl << Q.binArr() << endl << Q_1 << endl;
+	}
+	return A.binArrFull() + Q.binArrFull();
+}
+
+string QInt::binArrFull(){ //chuỗi 128 bit đầy đủ, ko bỏ số 0 đầu
+	string res = "";
+	int i = 127;
+	while (i >= 0){
+		int bit = this->getBit(i);
+		res.insert(res.begin(), bit + '0');
+		i--;
+	}
+	return res;
+}
+
+//thêm phương thức chia trả về chuỗi quotient lượt bỏ 0 đầu
+string QInt::chia(QInt& M){
+	QInt A;
+	QInt Q = (*this);
+	int dauQ = Q.getBit(0);
+	int dauM = M.getBit(0);
+	M = abs(M);
+	Q = abs(Q);
+	int firstQ;
+	int i = 128;
+	while (i--){
+		firstQ = Q.getBit(0);
+		A.leftShift();
+		Q.leftShift();
+		A.setBit(127, firstQ);
+		A = A - M;
+		if (A.m_data[0] < 0) {
+			A = A + M;
+			Q.setBit(127, 0);
+		}
+		else Q.setBit(127, 1);
+	}
+	return Q.binArr();
+}
+string QInt::getFromTo(int x, int y){
+	string res = "";
+	for (int i = x; i <= y; i++){
+		res += getBit(i) + '0';
+	}
 	return res;
 }

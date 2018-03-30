@@ -1,16 +1,51 @@
-#include "QFloat.h"
+﻿#include "QFloat.h"
 
 
-QFloat::QFloat() :QBit()
-{
+int QFloat::getBit(int pos){ //pos tinh tu l->r : 0->127
+	int data_i = pos / 32;
+	pos %= 32;
+	int bit = (this->m_data[data_i] >> (31 - pos)) & 1;
+	return bit;
 }
 
-QFloat::QFloat(string s) : QBit(s) {
-
+//Set bit vào vị trí pos của QFloat
+void QFloat::setBit(int pos, int bit){
+	int bitpos = this->getBit(pos);
+	int data_i = pos / 32;
+	pos = pos % 32;
+	if (bitpos == 1 && bit == 0){
+		this->m_data[data_i] = this->m_data[data_i] - (1 << (31 - pos));
+	}
+	else{
+		this->m_data[data_i] = this->m_data[data_i] | (bit << (31 - pos));
+	}
+	//or ma bit=1 thi no sẽ set đúng, còn bit=0 thì ko đổi.
 }
 
-QFloat::~QFloat()
-{
+
+QFloat::QFloat(){
+	m_data[0] = m_data[1] = m_data[2] = m_data[3] = 0;
+}
+
+//full constructor
+QFloat::QFloat(int x, int y, int z, int t){
+	m_data[0] = x;
+	m_data[1] = y;
+	m_data[2] = z;
+	m_data[3] = t;
+}
+//Constructor với đối số là dãy bit
+QFloat::QFloat(string binArr){ //128 bit
+	while (binArr.length() < 128)
+		binArr += "0";//thêm "0" ở phía sau
+	for (int i = 0; i < 128; i++){
+		this->setBit(i, binArr[i] - '0');
+	}
+}
+QFloat::QFloat(const QFloat& b){
+	for (int i = 0; i < 4; i++){
+		this->m_data[i] = b.m_data[i];
+	}
 }
 
 void QFloat::setSign(string &part1)
@@ -78,8 +113,7 @@ void QFloat::ScanQFloat(string input, int base) {
 		int exp = countExponent(bitPart1, bitPart2);
 		
 		string exp_bit = cvBias(exp);
-		cout << exp << endl;
-		cout << exp_bit << endl;
+
 		setExp(exp_bit);
 
 		//update fraction
@@ -122,34 +156,6 @@ void QFloat::ScanQFloat(string input, int base) {
 	}
 }
 
-void QFloat::PrintQFloat(int base) {
-	string bit;
-	for (int i = 0; i < 128; i++) {
-		bit.push_back(getBit(i)+'0');
-	}
-
-	cout << endl;
-	cout << bit << endl;
-
-	int type = Classification(bit);
-
-	switch (type) {
-	case 0:
-		cout << "0";
-		break;
-	case 1:
-		printNormalize(bit);
-		break;
-	case 2:
-		break;
-	case 3:
-		cout << "Inf\n";
-		break;
-	case 4:
-		break;
-	}
-}
-
 void QFloat::printNormalize(string bit) {
 	string exp_bit;
 	for (int i = 1; i <= 15; i++) {
@@ -157,7 +163,7 @@ void QFloat::printNormalize(string bit) {
 	}
 	int exp = cvBiasToNum(exp_bit);
 
-	
+
 
 	string part1 = "";
 	string part2 = "";
@@ -177,25 +183,74 @@ void QFloat::printNormalize(string bit) {
 			part2.push_back(bit[i]);
 	}
 
-	
 
+	if (getBit(0) == 1)
+		cout << "-";
 	cout << BitToNumBeforeDot(part1);
 	cout << "." << BitToNumAfterDot(part2);
 	cout << endl;
 
 }
-void QFloat::printDeNormalize() {
 
+void QFloat::printDeNormalize(string bit)
+{
+	if (bit[0] == 1)
+		cout << "-";
+
+	bit = bit.substr(16);
+	
+	string res = "0";
+
+	for (int i = 111; i >= 0; i--) {
+		if (bit[111 - i] == '1') {
+			int exp = 16494 + i;
+			res = addFrac(res, _2Exp_n(exp));
+		}
+	}
+
+	cout << res << endl;
 }
 
-bool QFloat::checkZero() const {
+void QFloat::PrintQFloat(int base) {
+	
+	string bit;
+	for (int i = 0; i < 128; i++) {
+		bit.push_back(getBit(i)+'0');
+	}
+	if (base == 2) {
+		cout << bit << endl;
+		return;
+	}
+
+	int type = Classification(bit);
+
+	switch (type) {
+	case 0:
+		cout << "0";
+		break;
+	case 1:
+		printNormalize(bit);
+		break;
+	case 2:
+		printDeNormalize(bit);
+		break;
+	case 3:
+		cout << "Inf\n";
+		break;
+	case 4:
+		cout << "NaN\n";
+		break;
+	}
+}
+
+bool QFloat::checkZero() {
 	for (int i = 1; i < 128; i++)
 		if (getBit(i) == 1)
 			return false;
 	return true;
 }
 
-bool QFloat::checkExpEqual(const QFloat&y) {
+bool QFloat::checkExpEqual( QFloat&y) {
 	for (int i = 1; i < 16; i++)
 		if (getBit(i) != y.getBit(i))
 			return false;
@@ -356,5 +411,102 @@ QFloat QFloat::operator-(const QFloat &num2) {
 	QFloat res, x = *this, y = num2;
 	y.getBit(0) == 0 ? y.setBit(0, 1) : y.setBit(0, 0);
 	res = x + y;
+	return res;
+}
+
+bool QFloat::is0(){
+	for (int i = 0; i < 128; i++){
+		if (this->getBit(i) == 1) return false;
+	}
+	return true;
+}
+
+
+string normalize(string multi, int& addExp){ //addExp: số mũ cần tăng hoặc giảm
+	multi = multi.substr(30);
+	int i = 0;
+	for (; i < multi.length(); i++){
+		if (multi[i] == '1') {
+			addExp = 1 - i; //công thức chứng minh sau
+			break;
+		}
+	}
+	return multi.substr(i + 1); //return về dãy bit mantissa của kết quả 
+}
+
+QFloat QFloat::operator * (QFloat& y){
+	QFloat x, z;
+	x = (*this);
+	if (x.is0() || y.is0())
+		return QFloat("0");
+	int addExp = 0; //số mũ cần modify sau khi normalize
+	string biasOfx = x.getFromTo(1, 15); //getFromTo định nghĩa ở dưới
+	string biasOfy = y.getFromTo(1, 15);
+	QInt t1(biasOfx), t2(biasOfy);
+	string fracOfx = x.getFromTo(16, 127);
+	string fracOfy = y.getFromTo(16, 127);
+	fracOfx.insert(fracOfx.begin(), '1');
+	fracOfy.insert(fracOfy.begin(), '1');
+	QInt f1(fracOfx);
+	QInt f2(fracOfy);
+	string fracOfz = normalize(f1.nhan(f2), addExp); //nhan return string 128*2=256 bits, normalize định nghĩa ở dưới
+	string biasOfz = (QInt(biasOfx) + QInt(biasOfy) - QInt("011111111111111") + QInt(0, 0, 0, addExp)).getFromTo(113, 127);
+
+	string minus = "0";
+	if (x.getBit(0) != y.getBit(0)) {//trái dấu
+		minus = "1";
+	}
+	return QFloat(minus + biasOfz + fracOfz);
+}
+
+
+
+
+//Phép chia cũng có các hàm tương tự như sau
+string normalizeDivision(string quotient, int& addExp){ //qutient đã lượt bỏ 0 đầu
+	//113/56 -> 58 kí tự
+	if (quotient.length() == 58) {//nghĩa là bit nguyên =1
+		addExp = 0;
+	}
+	else { //quotient.length()==57
+		addExp = -1;
+	}
+	quotient.erase(quotient.begin()); //bỏ bit 1 đầu để đưa về dạng chuẩn
+	return quotient;
+}
+QFloat QFloat::operator /(QFloat& y){
+	QFloat x, z;
+	x = (*this);
+	if (x.is0())
+		return QFloat("0");
+	if (y.is0())
+		return QFloat("01111111111111110000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
+
+	string biasOfx = x.getFromTo(1, 15);
+	string biasOfy = y.getFromTo(1, 15);
+	QInt t1(biasOfx), t2(biasOfy);
+
+	string fracOfx = x.getFromTo(16, 127);
+	string fracOfy = y.getFromTo(16, 127);
+	fracOfx.insert(fracOfx.begin(), '1');
+	fracOfy.insert(fracOfy.begin(), '1');
+	fracOfy = fracOfy.substr(0, 56);
+	QInt f1(fracOfx);
+	QInt f2(fracOfy);
+	int addExp = 0; //0 or -1
+	string fracOfz = normalizeDivision(f1.chia(f2), addExp);
+	string biasOfz = (QInt(biasOfx) + QInt("011111111111111") - QInt(biasOfy) + QInt(0, 0, 0, addExp)).getFromTo(113, 127);
+	string minus = "0";
+	if (x.getBit(0) != y.getBit(0)) {//trái dấu
+		minus = "1";
+	}
+	while (fracOfz.length() < 116) fracOfz += "0";
+	return QFloat(minus + biasOfz + fracOfz);
+}
+string QFloat::getFromTo(int x, int y){
+	string res = "";
+	for (int i = x; i <= y; i++){
+		res += getBit(i) + '0';
+	}
 	return res;
 }

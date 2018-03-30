@@ -19,19 +19,17 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="FloatTools.h" />
-    <ClInclude Include="IntFunction.h" />
-    <ClInclude Include="QBit.h" />
-    <ClInclude Include="QFloat.h" />
-    <ClInclude Include="QInt.h" />
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="FloatTools.cpp" />
     <ClCompile Include="IntFunction.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="QBit.cpp" />
     <ClCompile Include="QFloat.cpp" />
     <ClCompile Include="QInt.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="FloatTools.h" />
+    <ClInclude Include="IntFunction.h" />
+    <ClInclude Include="QFloat.h" />
+    <ClInclude Include="QInt.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>

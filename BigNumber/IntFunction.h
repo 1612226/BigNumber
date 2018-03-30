@@ -1,5 +1,5 @@
-﻿#pragma once
-//chuyen string giua cac co so 2,10,16
+﻿//chuyen string giua cac co so 2,10,16
+#pragma once
 #include <iostream>
 #include <string>
 #include <vector>

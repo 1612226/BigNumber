@@ -1,13 +1,18 @@
 ﻿#pragma once
-#include "QBit.h"
+#include "QInt.h"
 #include "FloatTools.h"
 
-class QFloat :public QBit
+class QFloat
 {
+private:
+	int m_data[4];
 public:
+	int getBit(int pos);
+	void setBit(int pos, int bit);
 	QFloat();
-	QFloat(string);
-	~QFloat();
+	QFloat(int, int, int, int);
+	QFloat(string binArr);
+	QFloat(const QFloat& b);
 	// set bit ở phần dấu
 	void setSign(string &part1);
 	
@@ -19,13 +24,13 @@ public:
 	void ScanQFloat(string input, int base);
 	void PrintQFloat(int base);
 	void printNormalize(string bit);
-	void printDeNormalize();
+	void printDeNormalize(string bit);
 
 	//Kiem tra QFloat co bang 0 hay khong?
-	bool checkZero() const;
+	bool checkZero();
 
 	//Kiem tra so mu cua 2 so co bang nhau hay khong
-	bool checkExpEqual(const QFloat&);
+	bool checkExpEqual( QFloat&);
 	
 	//Kiem tra so mu co tran so tren hay khong?
 	bool checkExpOverflow();
@@ -58,6 +63,9 @@ public:
 	QFloat operator-(const QFloat &);
 	
 	
-	/*QFloat operator*(const QFloat &);
-	QFloat operator/(const QFloat &);*/
+	QFloat operator*(QFloat &);
+	QFloat operator/(QFloat &);
+
+	bool is0();
+	string getFromTo(int x, int y);
 };

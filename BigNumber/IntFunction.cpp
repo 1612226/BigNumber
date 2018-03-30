@@ -61,7 +61,7 @@ string strx2(string str){
 
 //chuỗi * 2^n, return chuỗi
 string _2Expn(int n){
-	string str="1";
+	string str = "1";
 	for (int i = 0; i < n; i++){
 		str = strx2(str);
 	}
@@ -109,8 +109,8 @@ string BinToDec(string Bin){
 	}
 	int i = 127;
 	string res = "";
-	int j = Bin.length()-1;
-	while (i > 0 && j>=0){
+	int j = Bin.length() - 1;
+	while (i > 0 && j >= 0){
 		int bit = Bin[j] - '0';
 		if (bit){
 			string mu2 = _2Expn(127 - i);
@@ -130,12 +130,12 @@ string BinToHex(string bin){
 		for (int k = 0; k < (4 - len % 4); k++)
 			bin.insert(bin.begin(), '0');
 	}
-	string res="";
+	string res = "";
 	int i = bin.length() - 1;
 	while (i >= 0){
 		int num = 0;
 		for (int j = 0; j < 4; j++){
-			num += pow(2, j)*(bin[i]-'0');
+			num += pow(2, j)*(bin[i] - '0');
 			i--;
 		}
 		if (num >= 10) num += 55;
@@ -147,7 +147,7 @@ string BinToHex(string bin){
 
 //chuyển cơ số 16 sang dãy bit nhị phân
 string HexToBin(string Hex){
-	int i = Hex.length()-1;
+	int i = Hex.length() - 1;
 	string res = "";
 	while (i >= 0){
 		if (Hex[i] >= 65) Hex[i] -= 55;
@@ -178,7 +178,7 @@ vector<string> splitLine(string line){
 	char* s = strdup(line.c_str());
 	char* token = strtok(s, " ");
 	while (token != NULL){
-		res.push_back((string) token);
+		res.push_back((string)token);
 		token = strtok(NULL, " ");
 	}
 	return res;
@@ -193,7 +193,7 @@ string readLine(string line){
 			   QInt num;
 			   num.scan(phan[2], base1);
 			   return num.print(base2);
-		}
+	}
 	case 4:{
 			   int base = stoi(phan[0]);
 			   QInt a;
@@ -219,8 +219,8 @@ string readLine(string line){
 				   else if (phan[2] == "^") res = a^b;
 			   }
 			   return res.print(base);
-			}
-		}
+	}
+	}
 }
 
 //int main(){

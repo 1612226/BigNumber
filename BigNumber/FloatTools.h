@@ -65,3 +65,5 @@ string BitToNumAfterDot(string bit);
 //2 mu trừ n
 string fstrDiv2v2(string str);
 string _2Exp_n(int n);
+// cộng chuỗi số sau dấu chấm
+string addFrac(string a, string b);
